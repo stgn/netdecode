@@ -91,8 +91,8 @@ namespace netdecode
         static void net_tick(BitBuffer bb, TreeNode node)
         {
             node.Nodes.Add("Tick: " + (int)bb.ReadBits(32));
-            node.Nodes.Add("Unknown: " + bb.ReadBits(16));
-            node.Nodes.Add("Unknown: " + bb.ReadBits(16));
+            node.Nodes.Add("Host frametime: " + bb.ReadBits(16));
+            node.Nodes.Add("Host frametime StdDev: " + bb.ReadBits(16));
         }
 
         static void net_stringcmd(BitBuffer bb, TreeNode node)
@@ -109,8 +109,8 @@ namespace netdecode
 
         static void net_signonstate(BitBuffer bb, TreeNode node)
         {
-            node.Nodes.Add("State: " + bb.ReadBits(8));
-            node.Nodes.Add("Server count: " + (int)bb.ReadBits(32));
+            node.Nodes.Add("Signon state: " + bb.ReadBits(8));
+            node.Nodes.Add("Spawn count: " + (int)bb.ReadBits(32));
         }
 
         static void svc_print(BitBuffer bb, TreeNode node)
@@ -139,24 +139,24 @@ namespace netdecode
 
         static void svc_sendtable(BitBuffer bb, TreeNode node)
         {
-            node.Nodes.Add("Unknown: " + bb.ReadBool());
+            node.Nodes.Add("Needs decoder: " + bb.ReadBool());
             var n = bb.ReadBits(16);
-            node.Nodes.Add("Bits: " + n);
+            node.Nodes.Add("Length in bits: " + n);
             bb.Seek(n);
         }
 
         static void svc_classinfo(BitBuffer bb, TreeNode node)
         {
             var n = bb.ReadBits(16);
-            node.Nodes.Add("Number of classes: " + n);
+            node.Nodes.Add("Number of server classes: " + n);
             var cc = bb.ReadBool();
-            node.Nodes.Add("Use client classes: " + cc);
+            node.Nodes.Add("Create classes on client: " + cc);
             if (!cc)
                 while (n-- > 0)
                 {
-                    node.Nodes.Add("Unknown: " + bb.ReadBits((uint)Math.Log(n, 2) + 1));
-                    node.Nodes.Add("Unknown: " + bb.ReadString());
-                    node.Nodes.Add("Unknown: " + bb.ReadString());
+                    node.Nodes.Add("Class ID: " + bb.ReadBits((uint)Math.Log(n, 2) + 1));
+                    node.Nodes.Add("Class name: " + bb.ReadString());
+                    node.Nodes.Add("Datatable name: " + bb.ReadString());
                 }
         }
 
@@ -170,14 +170,18 @@ namespace netdecode
             node.Nodes.Add("Table name: " + bb.ReadString());
             var m = bb.ReadBits(16);
             node.Nodes.Add("Max entries: " + m);
-            node.Nodes.Add("Entires: " + bb.ReadBits((uint)Math.Log(m, 2) + 1));
+            node.Nodes.Add("Number of entries: " + bb.ReadBits((uint)Math.Log(m, 2) + 1));
             var n = bb.ReadBits(20);
-            node.Nodes.Add("Bits: " + n);
-            if (bb.ReadBool())
+            node.Nodes.Add("Length in bits: " + n);
+            var f = bb.ReadBool();
+            node.Nodes.Add("Userdata fixed size: " + f);
+            if (f)
             {
                 node.Nodes.Add("Userdata size: " + bb.ReadBits(12));
                 node.Nodes.Add("Userdata bits: " + bb.ReadBits(4));
             }
+
+            // FUCK: this is not in Source 2007 netmessages.h/cpp it seems.
             node.Nodes.Add("Compressed: " + bb.ReadBool());
             bb.Seek(n);
         }
@@ -185,10 +189,9 @@ namespace netdecode
         static void svc_updatestringtable(BitBuffer bb, TreeNode node)
         {
             node.Nodes.Add("Table ID: " + bb.ReadBits(5));
-            if (bb.ReadBool())
-                node.Nodes.Add("Unknown: " + bb.ReadBits(16));
+            node.Nodes.Add("Changed entries: " + (bb.ReadBool() ? bb.ReadBits(16) : 1));
             var b = bb.ReadBits(20);
-            node.Nodes.Add("Bits: " + b);
+            node.Nodes.Add("Length in bits: " + b);
             bb.Seek(b);
         }
 
@@ -203,7 +206,7 @@ namespace netdecode
             node.Nodes.Add("Client: " + bb.ReadBits(8));
             node.Nodes.Add("Proximity: " + bb.ReadBits(8));
             var b = bb.ReadBits(16);
-            node.Nodes.Add("Bits: " + b);
+            node.Nodes.Add("Length in bits: " + b);
             bb.Seek(b);
         }
 
@@ -211,21 +214,15 @@ namespace netdecode
         {
             var r = bb.ReadBool();
             node.Nodes.Add("Reliable: " + r);
-            uint b;
-            if (!r)
-            {
-                node.Nodes.Add("Number: " + bb.ReadBits(8));
-                b = bb.ReadBits(16);
-            }
-            else
-                b = bb.ReadBits(8);
-            node.Nodes.Add("Bits: " + b);
+            node.Nodes.Add("Number of sounds: " + (r ? 1 : bb.ReadBits(8)));
+            uint b = r ? bb.ReadBits(8) : bb.ReadBits(16);
+            node.Nodes.Add("Length in bits: " + b);
             bb.Seek(b);
         }
 
         static void svc_setview(BitBuffer bb, TreeNode node)
         {
-            node.Nodes.Add("View entity: " + bb.ReadBits(11));
+            node.Nodes.Add("Entity index: " + bb.ReadBits(11));
         }
 
         static void svc_fixangle(BitBuffer bb, TreeNode node)
@@ -244,11 +241,11 @@ namespace netdecode
         static void svc_bspdecal(BitBuffer bb, TreeNode node)
         {
             node.Nodes.Add("Position: " + bb.ReadVecCoord());
-            node.Nodes.Add("Texture: " + bb.ReadBits(9));
+            node.Nodes.Add("Decal texture index: " + bb.ReadBits(9));
             if (bb.ReadBool())
             {
-                node.Nodes.Add("Entity: " + bb.ReadBits(11));
-                node.Nodes.Add("Modulation: " + bb.ReadBits(12));
+                node.Nodes.Add("Entity index: " + bb.ReadBits(11));
+                node.Nodes.Add("Model index: " + bb.ReadBits(12));
             }
             node.Nodes.Add("Low priority: " + bb.ReadBool());
         }
@@ -257,65 +254,67 @@ namespace netdecode
         {
             node.Nodes.Add("Message type: " + bb.ReadBits(8));
             var b = bb.ReadBits(11);
-            node.Nodes.Add("Bits: " + b);
+            node.Nodes.Add("Length in bits: " + b);
             bb.Seek(b);
         }
 
         static void svc_entitymessage(BitBuffer bb, TreeNode node)
         {
-            node.Nodes.Add("Entity: " + bb.ReadBits(11));
-            node.Nodes.Add("Class: " + bb.ReadBits(9));
+            node.Nodes.Add("Entity index: " + bb.ReadBits(11));
+            node.Nodes.Add("Class ID: " + bb.ReadBits(9));
             var b = bb.ReadBits(11);
-            node.Nodes.Add("Bits: " + b);
+            node.Nodes.Add("Length in bits: " + b);
             bb.Seek(b);
         }
 
         static void svc_gameevent(BitBuffer bb, TreeNode node)
         {
             var b = bb.ReadBits(11);
-            node.Nodes.Add("Bits: " + b);
+            node.Nodes.Add("Length in bits: " + b);
             bb.Seek(b);
         }
 
         static void svc_packetentities(BitBuffer bb, TreeNode node)
         {
-            node.Nodes.Add("Max: " + bb.ReadBits(11));
-            if (bb.ReadBool())
-                node.Nodes.Add("Delta: " + bb.ReadBits(32));
-            node.Nodes.Add("Unknown: " + bb.ReadBool());
-            node.Nodes.Add("Changed: " + bb.ReadBits(11));
+            node.Nodes.Add("Max entries: " + bb.ReadBits(11));
+            bool d = bb.ReadBool();
+            node.Nodes.Add("Is delta: " + d);
+            if (d)
+                node.Nodes.Add("Delta from: " + bb.ReadBits(32));
+            node.Nodes.Add("Baseline: " + bb.ReadBool());
+            node.Nodes.Add("Updated entries: " + bb.ReadBits(11));
             var b = bb.ReadBits(20);
-            node.Nodes.Add("Bits: " + b);
-            node.Nodes.Add("Unknown: " + bb.ReadBool());
+            node.Nodes.Add("Length in bits: " + b);
+            node.Nodes.Add("Update baseline: " + bb.ReadBool());
             bb.Seek(b);
         }
 
         static void svc_tempentities(BitBuffer bb, TreeNode node)
         {
-            node.Nodes.Add("Number: " + bb.ReadBits(8));
+            node.Nodes.Add("Number of entries: " + bb.ReadBits(8));
             var b = bb.ReadBits(17);
-            node.Nodes.Add("Bits: " + b);
+            node.Nodes.Add("Length in bits: " + b);
             bb.Seek(b);
         }
 
         static void svc_prefetch(BitBuffer bb, TreeNode node)
         {
-            node.Nodes.Add("Index: " + bb.ReadBits(13));
+            node.Nodes.Add("Sound index: " + bb.ReadBits(13));
         }
 
         static void svc_menu(BitBuffer bb, TreeNode node)
         {
             node.Nodes.Add("Menu type: " + bb.ReadBits(16));
             var b = bb.ReadBits(16);
-            node.Nodes.Add("Bytes: " + b);
+            node.Nodes.Add("Length in bytes: " + b);
             bb.Seek(b << 3);
         }
 
         static void svc_gameeventlist(BitBuffer bb, TreeNode node)
         {
-            node.Nodes.Add("Number: " + bb.ReadBits(9));
+            node.Nodes.Add("Number of events: " + bb.ReadBits(9));
             var b = bb.ReadBits(20);
-            node.Nodes.Add("Bits: " + b);
+            node.Nodes.Add("Length in bits: " + b);
             bb.Seek(b);
         }
 
@@ -328,7 +327,7 @@ namespace netdecode
         static void svc_cmdkeyvalues(BitBuffer bb, TreeNode node)
         {
             var b = bb.ReadBits(32);
-            node.Nodes.Add("Bits: " + b);
+            node.Nodes.Add("Length in bits: " + b);
             bb.Seek(b);
         }
     }
