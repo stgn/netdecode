@@ -80,6 +80,7 @@
             this.propertiesToolStripMenuItem.Name = "propertiesToolStripMenuItem";
             this.propertiesToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
             this.propertiesToolStripMenuItem.Text = "Properties";
+            this.propertiesToolStripMenuItem.Click += new System.EventHandler(this.propertiesToolStripMenuItem_Click);
             // 
             // splitContainer1
             // 
@@ -125,7 +126,7 @@
             this.Type.Text = "Type";
             this.Type.Width = 360;
             // 
-            // Size
+            // MsgSize
             // 
             this.MsgSize.Text = "Size";
             // 

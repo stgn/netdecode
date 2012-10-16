@@ -69,6 +69,8 @@ namespace netdecode
                     MessageBox.Show(ex.Message, "Error opening file", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
             }
+
+            propertiesToolStripMenuItem.Enabled = true;
         }
 
         private void messageList_SelectedIndexChanged(object sender, EventArgs e)
@@ -78,6 +80,19 @@ namespace netdecode
             foreach(DemoMessageItem item in messageList.SelectedItems) {
                 ParseIntoTree(item.Msg);
             }
+        }
+
+        private void propertiesToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            MessageBox.Show("Demo protocol: " + _currentFile.Info.DemoProtocol + "\n"
+                + "Net protocol: " + _currentFile.Info.NetProtocol + "\n"
+                + "Server name: " + _currentFile.Info.ServerName + "\n"
+                + "Client name: " + _currentFile.Info.ClientName + "\n"
+                + "Map name: " + _currentFile.Info.MapName + "\n"
+                + "Game directory: " + _currentFile.Info.GameDirectory + "\n"
+                + "Length in seconds: " + _currentFile.Info.Seconds + "\n"
+                + "Tick count: " + _currentFile.Info.TickCount + "\n"
+                + "Frame count: " + _currentFile.Info.FrameCount);
         }
     }
 
