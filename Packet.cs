@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Windows.Forms;
+using System.Drawing;
 
 namespace netdecode
 {
@@ -14,7 +15,7 @@ namespace netdecode
 
         private static readonly Dictionary<uint, MsgHandler> Handlers = new Dictionary<uint, MsgHandler>
         {
-            {0, new MsgHandler { Name = "net_nop", Handler = (_,__) => {}}},
+            {0, new MsgHandler { Name = "net_nop", Handler = (_,__) => { __.ForeColor = Color.Gray; }}},
             {1, new MsgHandler { Name = "net_disconnect", Handler = net_disconnect }},
             {2, new MsgHandler { Name = "net_file", Handler = net_file }},
             {3, new MsgHandler { Name = "net_tick", Handler = net_tick }},
@@ -69,7 +70,7 @@ namespace netdecode
                 }
                 else
                 {
-                    node.Nodes.Add("unknown message type " + type);
+                    node.Nodes.Add("unknown message type " + type).ForeColor = Color.Crimson;
                     break;
                 }
             }
@@ -122,11 +123,14 @@ namespace netdecode
         {
             node.Nodes.Add("Version: " + (short)bb.ReadBits(16));
             node.Nodes.Add("Server count: " + (int)bb.ReadBits(32));
+            bb.Seek(32); // what
             node.Nodes.Add("SourceTV: " + bb.ReadBool());
             node.Nodes.Add("Dedicated: " + bb.ReadBool());
             node.Nodes.Add("Server client CRC: 0x" + bb.ReadBits(32).ToString("X8"));
+            bb.Seek(32); // the
             node.Nodes.Add("Max classes: " + bb.ReadBits(16));
             node.Nodes.Add("Server map CRC: 0x" + bb.ReadBits(32).ToString("X8"));
+            bb.Seek(32); // fuck?
             node.Nodes.Add("Current player count: " + bb.ReadBits(8));
             node.Nodes.Add("Max player count: " + bb.ReadBits(8));
             node.Nodes.Add("Interval per tick: " + bb.ReadFloat());

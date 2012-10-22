@@ -81,8 +81,8 @@ namespace netdecode
                 switch (msg.Type)
                 {
                     case MessageType.Signon:
-                        //msg.tick = 0;
-                        msg.Data = reader.ReadBytes(Info.SignonLength);
+                        reader.BaseStream.Seek(0x58, SeekOrigin.Current);
+                        msg.Data = reader.ReadBytes(Info.SignonLength - 0x58);
                         break;
                     case MessageType.Packet:
                     case MessageType.ConsoleCmd:
