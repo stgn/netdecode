@@ -27,11 +27,14 @@ namespace netdecode
                     node.Nodes.Add(new TreeNode(Encoding.ASCII.GetString(msg.Data)));
                     break;
                 case DemoFile.MessageType.UserCmd:
-                    UserCmd.ParseIntoTreeNode(node, msg.Data);
+                    UserCmd.ParseIntoTreeNode(msg.Data, node);
                     break;
                 case DemoFile.MessageType.Signon:
                 case DemoFile.MessageType.Packet:
                     Packet.Parse(msg.Data, node);
+                    break;
+                case DemoFile.MessageType.DataTables:
+                    DataTables.Parse(msg.Data, node);
                     break;
                 default:
                     node.Nodes.Add(new TreeNode("Unhandled demo message type."));

@@ -47,6 +47,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="BitBuffer.cs" />
+    <Compile Include="DataTables.cs" />
     <Compile Include="MainForm.cs">
       <SubType>Form</SubType>
     </Compile>

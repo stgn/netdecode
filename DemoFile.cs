@@ -115,7 +115,7 @@ namespace netdecode
         }
 */
 
-        public static void ParseIntoTreeNode(TreeNode node, byte[] data)
+        public static void ParseIntoTreeNode(byte[] data, TreeNode node)
         {
             var bb = new BitBuffer(data);
             if (bb.ReadBool()) node.Nodes.Add("Command number: " + bb.ReadBits(32));
