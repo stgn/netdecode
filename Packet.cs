@@ -15,7 +15,7 @@ namespace netdecode
 
         private static readonly Dictionary<uint, MsgHandler> Handlers = new Dictionary<uint, MsgHandler>
         {
-            {0, new MsgHandler { Name = "net_nop", Handler = (_,__) => { __.ForeColor = Color.Gray; }}},
+            {0, new MsgHandler { Name = "net_nop", Handler = (_, node) => { node.ForeColor = Color.Gray; }}},
             {1, new MsgHandler { Name = "net_disconnect", Handler = net_disconnect }},
             {2, new MsgHandler { Name = "net_file", Handler = net_file }},
             {3, new MsgHandler { Name = "net_tick", Handler = net_tick }},
@@ -121,16 +121,17 @@ namespace netdecode
 
         static void svc_serverinfo(BitBuffer bb, TreeNode node)
         {
-            node.Nodes.Add("Version: " + (short)bb.ReadBits(16));
+            short version = (short)bb.ReadBits(16);
+            node.Nodes.Add("Version: " + version);
             node.Nodes.Add("Server count: " + (int)bb.ReadBits(32));
-            bb.Seek(32); // what
             node.Nodes.Add("SourceTV: " + bb.ReadBool());
             node.Nodes.Add("Dedicated: " + bb.ReadBool());
             node.Nodes.Add("Server client CRC: 0x" + bb.ReadBits(32).ToString("X8"));
-            bb.Seek(32); // the
             node.Nodes.Add("Max classes: " + bb.ReadBits(16));
-            node.Nodes.Add("Server map CRC: 0x" + bb.ReadBits(32).ToString("X8"));
-            bb.Seek(32); // fuck?
+            if (version < 18)
+                node.Nodes.Add("Server map CRC: 0x" + bb.ReadBits(32).ToString("X8"));
+            else
+                bb.Seek(128); // TODO: display out map md5 hash
             node.Nodes.Add("Current player count: " + bb.ReadBits(8));
             node.Nodes.Add("Max player count: " + bb.ReadBits(8));
             node.Nodes.Add("Interval per tick: " + bb.ReadFloat());
@@ -139,6 +140,7 @@ namespace netdecode
             node.Nodes.Add("Map name: " + bb.ReadString());
             node.Nodes.Add("Skybox name: " + bb.ReadString());
             node.Nodes.Add("Hostname: " + bb.ReadString());
+            node.Nodes.Add("Has replay: " + bb.ReadBool()); // ???: protocol version
         }
 
         static void svc_sendtable(BitBuffer bb, TreeNode node)
@@ -185,7 +187,7 @@ namespace netdecode
                 node.Nodes.Add("Userdata bits: " + bb.ReadBits(4));
             }
 
-            // FUCK: this is not in Source 2007 netmessages.h/cpp it seems.
+            // ???: this is not in Source 2007 netmessages.h/cpp it seems. protocol version?
             node.Nodes.Add("Compressed: " + bb.ReadBool());
             bb.Seek(n);
         }
@@ -324,7 +326,7 @@ namespace netdecode
 
         static void svc_getcvarvalue(BitBuffer bb, TreeNode node)
         {
-            node.Nodes.Add("Cookie: " + bb.ReadBits(32).ToString("X8"));
+            node.Nodes.Add("Cookie: 0x" + bb.ReadBits(32).ToString("X8"));
             node.Nodes.Add(bb.ReadString());
         }
 

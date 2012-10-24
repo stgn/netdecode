@@ -81,21 +81,19 @@ namespace netdecode
                 switch (msg.Type)
                 {
                     case MessageType.Signon:
-                        reader.BaseStream.Seek(0x58, SeekOrigin.Current);
-                        msg.Data = reader.ReadBytes(Info.SignonLength - 0x58);
-                        break;
                     case MessageType.Packet:
                     case MessageType.ConsoleCmd:
                     case MessageType.UserCmd:
                     case MessageType.DataTables:
                     case MessageType.StringTables:
-                        if (msg.Type == MessageType.Packet)
+                        if (msg.Type == MessageType.Packet || msg.Type == MessageType.Signon)
                             reader.BaseStream.Seek(0x54, SeekOrigin.Current); // command/sequence info
                         else if (msg.Type == MessageType.UserCmd)
                             reader.BaseStream.Seek(0x4, SeekOrigin.Current); // unknown
                         msg.Data = reader.ReadBytes(reader.ReadInt32());
                         break;
                     case MessageType.SyncTick:
+                        msg.Data = new byte[0]; // lol wut
                         break;
                     default:
                         throw new Exception("Unknown demo message type encountered.");

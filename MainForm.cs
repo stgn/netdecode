@@ -51,22 +51,15 @@ namespace netdecode
 
             if (ofd.ShowDialog() == DialogResult.OK)
             {
-                try
-                {
-                    messageList.Items.Clear();
+                messageList.Items.Clear();
 
-                    Stream f = ofd.OpenFile();
-                    _currentFile = new DemoFile(f);
-                    f.Close();
+                Stream f = ofd.OpenFile();
+                _currentFile = new DemoFile(f);
+                f.Close();
 
-                    foreach (var msg in _currentFile.Messages)
-                    {
-                        messageList.Items.Add(new DemoMessageItem(msg));
-                    }
-                }
-                catch (Exception ex)
+                foreach (var msg in _currentFile.Messages)
                 {
-                    MessageBox.Show(ex.Message, "Error opening file", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    messageList.Items.Add(new DemoMessageItem(msg));
                 }
             }
 
