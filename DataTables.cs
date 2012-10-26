@@ -39,10 +39,8 @@ namespace netdecode
             COORD_MP_INTEGRAL = 32768
         }
 
-        public static void Parse(byte[] data, TreeNode node)
+        static void ParseTables(BitBuffer bb, TreeNode node)
         {
-            var bb = new BitBuffer(data);
-
             while (bb.ReadBool())
             {
                 bool needsdecoder = bb.ReadBool();
@@ -57,10 +55,11 @@ namespace netdecode
                     var type = (SendPropType)bb.ReadBits(5);
                     var propnode = dtnode.Nodes.Add("DPT_" + type + " " + bb.ReadString());
                     var flags = (SendPropFlags)bb.ReadBits(16);
-                    
+
                     if (type == SendPropType.DataTable || (flags & SendPropFlags.EXCLUDE) != 0)
                         propnode.Text += " : " + bb.ReadString();
-                    else {
+                    else
+                    {
                         if (type == SendPropType.Array)
                             propnode.Text += "[" + bb.ReadBits(10) + "]";
                         else
@@ -71,6 +70,21 @@ namespace netdecode
                     }
                 }
             }
+        }
+
+        static void ParseClassInfo(BitBuffer bb, TreeNode node)
+        {
+            var classes = bb.ReadBits(16);
+
+            for (int i = 0; i < classes; i++)
+                node.Nodes.Add("[" + bb.ReadBits(16) + "] " + bb.ReadString() + " (" + bb.ReadString() + ")");
+        }
+
+        public static void Parse(byte[] data, TreeNode node)
+        {
+            var bb = new BitBuffer(data);
+            ParseTables(bb, node.Nodes.Add("Send tables"));
+            ParseClassInfo(bb, node.Nodes.Add("Class info"));
         }
     }
 }
