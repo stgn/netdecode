@@ -48,6 +48,7 @@ namespace netdecode
                 bool needsdecoder = bb.ReadBool();
                 var dtnode = node.Nodes.Add(bb.ReadString());
                 if (needsdecoder) dtnode.Text += "*";
+
                 var numprops = bb.ReadBits(10);
                 dtnode.Text += " (" + numprops + " props)";
 
@@ -63,7 +64,10 @@ namespace netdecode
                         if (type == SendPropType.Array)
                             propnode.Text += "[" + bb.ReadBits(10) + "]";
                         else
-                            bb.Seek(71);
+                        {
+                            bb.Seek(64);
+                            propnode.Text += " (" + bb.ReadBits(7) + " bits)";
+                        }
                     }
                 }
             }
