@@ -11,9 +11,11 @@ namespace netdecode
             Int = 0,
             Float,
             Vector,
+            VectorXY,
             String,
             Array,
-            DataTable
+            DataTable,
+            Int64
         }
 
         [Flags]
@@ -34,8 +36,7 @@ namespace netdecode
             COLLAPSIBLE = 4096,
             COORD_MP = 8192,
             COORD_MP_LOWPRECISION = 16384,
-            COORD_MP_INTEGRAL = 32768,
-            ENCODED_AGAINST_TICKCOUNT = 65536
+            COORD_MP_INTEGRAL = 32768
         }
 
         public static void Parse(byte[] data, TreeNode node)
@@ -46,23 +47,23 @@ namespace netdecode
             {
                 bool needsdecoder = bb.ReadBool();
                 var dtnode = node.Nodes.Add(bb.ReadString());
+                if (needsdecoder) dtnode.Text += "*";
                 var numprops = bb.ReadBits(10);
+                dtnode.Text += " (" + numprops + " props)";
 
                 for (int i = 0; i < numprops; i++)
                 {
                     var type = (SendPropType)bb.ReadBits(5);
-                    dtnode.Nodes.Add("DPT_" + type + " " + bb.ReadString());
+                    var propnode = dtnode.Nodes.Add("DPT_" + type + " " + bb.ReadString());
                     var flags = (SendPropFlags)bb.ReadBits(16);
-
-                    if (type == SendPropType.DataTable)
-                        bb.ReadString();
+                    
+                    if (type == SendPropType.DataTable || (flags & SendPropFlags.EXCLUDE) != 0)
+                        propnode.Text += " : " + bb.ReadString();
                     else {
-                        if ((flags & SendPropFlags.EXCLUDE) != 0)
-                            bb.ReadString();
-                        else if (type == SendPropType.Array)
-                            bb.Seek(10);
+                        if (type == SendPropType.Array)
+                            propnode.Text += "[" + bb.ReadBits(10) + "]";
                         else
-                            bb.Seek(70);
+                            bb.Seek(71);
                     }
                 }
             }
