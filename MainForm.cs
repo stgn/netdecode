@@ -24,7 +24,7 @@ namespace netdecode
             switch (msg.Type)
             {
                 case DemoFile.MessageType.ConsoleCmd:
-                    node.Nodes.Add(new TreeNode(Encoding.ASCII.GetString(msg.Data)));
+                    node.Nodes.Add(Encoding.ASCII.GetString(msg.Data));
                     break;
                 case DemoFile.MessageType.UserCmd:
                     UserCmd.ParseIntoTreeNode(msg.Data, node);
@@ -37,7 +37,7 @@ namespace netdecode
                     DataTables.Parse(msg.Data, node);
                     break;
                 default:
-                    node.Nodes.Add(new TreeNode("Unhandled demo message type."));
+                    node.Nodes.Add("Unhandled demo message type.");
                     break;
             }
 

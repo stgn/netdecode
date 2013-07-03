@@ -7,46 +7,43 @@ namespace netdecode
 {
     class Packet
     {
-        struct MsgHandler
-        {
-            public string Name;
-            public Action<BitBuffer, TreeNode> Handler;
-        }
+        delegate void MsgHandler(BitBuffer bb, TreeNode node);
 
-        private static readonly Dictionary<uint, MsgHandler> Handlers = new Dictionary<uint, MsgHandler>
+        static readonly Dictionary<uint, MsgHandler> Handlers = new Dictionary<uint, MsgHandler>
         {
-            {0, new MsgHandler { Name = "net_nop", Handler = (_, node) => { node.ForeColor = Color.Gray; }}},
-            {1, new MsgHandler { Name = "net_disconnect", Handler = net_disconnect }},
-            {2, new MsgHandler { Name = "net_file", Handler = net_file }},
-            {3, new MsgHandler { Name = "net_tick", Handler = net_tick }},
-            {4, new MsgHandler { Name = "net_stringcmd", Handler = net_stringcmd }},
-            {5, new MsgHandler { Name = "net_setconvar", Handler = net_setconvar }},
-            {6, new MsgHandler { Name = "net_signonstate", Handler = net_signonstate }},
+            {0, (_, node) => 
+                { node.Text = "net_nop"; node.ForeColor = Color.Gray; }},
+            {1, net_disconnect},
+            {2, net_file},
+            {3, net_tick},
+            {4, net_stringcmd},
+            {5, net_setconvar},
+            {6, net_signonstate},
 
-            {7, new MsgHandler { Name = "svc_print", Handler = svc_print }},
-            {8, new MsgHandler { Name = "svc_serverinfo", Handler = svc_serverinfo }},
-            {9, new MsgHandler { Name = "svc_sendtable", Handler = svc_sendtable }},
-            {10, new MsgHandler { Name = "svc_classinfo", Handler = svc_classinfo }},
-            {11, new MsgHandler { Name = "svc_setpause", Handler = svc_setpause }},
-            {12, new MsgHandler { Name = "svc_createstringtable", Handler = svc_createstringtable }},
-            {13, new MsgHandler { Name = "svc_updatestringtable", Handler = svc_updatestringtable }},
-            {14, new MsgHandler { Name = "svc_voiceinit", Handler = svc_voiceinit }},
-            {15, new MsgHandler { Name = "svc_voicedata", Handler = svc_voicedata }},
-            {17, new MsgHandler { Name = "svc_sounds", Handler = svc_sounds }},
-            {18, new MsgHandler { Name = "svc_setview", Handler = svc_setview }},
-            {19, new MsgHandler { Name = "svc_fixangle", Handler = svc_fixangle }},
-            {20, new MsgHandler { Name = "svc_crosshairangle", Handler = svc_crosshairangle }},
-            {21, new MsgHandler { Name = "svc_bspdecal", Handler = svc_bspdecal }},
-            {23, new MsgHandler { Name = "svc_usermessage", Handler = svc_usermessage }},
-            {24, new MsgHandler { Name = "svc_entitymessage", Handler = svc_entitymessage }},
-            {25, new MsgHandler { Name = "svc_gameevent", Handler = svc_gameevent }},
-            {26, new MsgHandler { Name = "svc_packetentities", Handler = svc_packetentities }},
-            {27, new MsgHandler { Name = "svc_tempentities", Handler = svc_tempentities }},
-            {28, new MsgHandler { Name = "svc_prefetch", Handler = svc_prefetch }},
-            {29, new MsgHandler { Name = "svc_menu", Handler = svc_menu }},
-            {30, new MsgHandler { Name = "svc_gameeventlist", Handler = svc_gameeventlist }},
-            {31, new MsgHandler { Name = "svc_getcvarvalue", Handler = svc_getcvarvalue }},
-            {32, new MsgHandler { Name = "svc_cmdkeyvalues", Handler = svc_cmdkeyvalues }}
+            {7, svc_print},
+            {8, svc_serverinfo},
+            {9, svc_sendtable},
+            {10, svc_classinfo},
+            {11, svc_setpause},
+            {12, svc_createstringtable},
+            {13, svc_updatestringtable},
+            {14, svc_voiceinit},
+            {15, svc_voicedata},
+            {17, svc_sounds},
+            {18, svc_setview},
+            {19, svc_fixangle},
+            {20, svc_crosshairangle},
+            {21, svc_bspdecal},
+            {23, svc_usermessage},
+            {24, svc_entitymessage},
+            {25, svc_gameevent},
+            {26, svc_packetentities},
+            {27, svc_tempentities},
+            {28, svc_prefetch},
+            {29, svc_menu},
+            {30, svc_gameeventlist},
+            {31, svc_getcvarvalue},
+            {32, svc_cmdkeyvalues}
         };
 
         public static void Parse(byte[] data, TreeNode node)
@@ -59,14 +56,9 @@ namespace netdecode
                 MsgHandler handler;
                 if (Handlers.TryGetValue(type, out handler))
                 {
-                    var sub = new TreeNode(handler.Name);
+                    var sub = new TreeNode(handler.Method.Name);
                     node.Nodes.Add(sub);
-                    if (handler.Handler != null)
-                    {
-                        handler.Handler(bb, sub);
-                    }
-                    else
-                        break;
+                    handler(bb, sub);
                 }
                 else
                 {
